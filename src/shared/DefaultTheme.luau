@@ -1,6 +1,6 @@
-local ThemeTypes = require(game.ReplicatedStorage.Shared.ThemeTypes)
+local Types = require(game.ReplicatedStorage.Shared.Types)
 
-local theme: ThemeTypes.Theme = {
+local theme: Types.Theme = {
 	Colors = {
 		Background = Color3.fromHex("#161615"),
 		Surface = Color3.fromHex("#262322"),

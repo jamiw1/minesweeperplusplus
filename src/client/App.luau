@@ -13,7 +13,7 @@ function App()
             e("Frame", {Size = UDim2.fromScale(1, 1), BackgroundColor3 = theme.Colors.Background, BorderSizePixel = 0})
         }),
         Game = e("ScreenGui", {}, {
-            e(GameComponent, {})
+            e(GameComponent, {Width = 10, Height = 10, Size = 32, Padding = 10})
         })
     })
 end

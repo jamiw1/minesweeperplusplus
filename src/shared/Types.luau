@@ -17,4 +17,26 @@ export type Theme = {
     }
 }
 
+export type Skin = {
+	Tiles: string,
+    TileSize: number,
+	Smileys: string,
+    SmileySize: number,
+
+    Aliased: boolean,
+
+	Sounds: {
+        TileDown: string,
+        TileUp: string,
+
+        Chord: string,
+
+        PlaceFlag: string,
+        RemoveFlag: string,
+
+        Win: string,
+        Lose: string
+    },
+}
+
 return {}
