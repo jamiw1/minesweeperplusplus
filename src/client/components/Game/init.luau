@@ -1,24 +1,26 @@
+local TouchInputService = game:GetService("TouchInputService")
 local UserInputService = game:GetService("UserInputService")
+local Calculations = require(script.Calculations)
 local React = require(game.ReplicatedStorage.Packages.React)
+local Types = require(game.ReplicatedStorage.Shared.Types)
 local Theme = require(script.Parent.Theme)
 local Padding = require(script.Parent.Padding)
 local TileComponent = require(script.Tile)
 
 local e = React.createElement
 
-type Tile = {
-    currentState: "unrevealed" | "revealed" | "flagged",
-    isBomb: boolean,
-}
+type Tile = Types.Tile
 
-function generateBoard(width: number, height: number, bombCount: number): {{Tile}}
+function generateBoard(width: number, height: number, bombCount: number): Types.Board
     local grid: {{Tile}} = {}
 	for x = 1, width do
 		grid[x] = {}
 		for y = 1, height do
 			grid[x][y] = {
-                currentState = "unrevealed",
-                isBomb = false
+                revealed = false,
+                isBomb = false,
+                detonated = false,
+                modification = "none"
             }
 		end
 	end
@@ -35,10 +37,14 @@ function generateBoard(width: number, height: number, bombCount: number): {{Tile
     return grid
 end
 
-function GameComponent(props: {Width: number, Height: number, Size: number, Padding: number})
+function GameComponent(props: {Width: number, Height: number, Size: number, Padding: number, Skin: Types.Skin})
     local theme = React.useContext(Theme.Context)
     local tileState, setTileState = React.useState(generateBoard(props.Width, props.Height, 10))
     local mouseDown, setMouseDown = React.useState(false)
+
+    function bombCallback(x: number, y: number) 
+		print("hit bomb")
+    end
 
     local tiles: {React.ReactNode} = {}
     local i = 0
@@ -46,13 +52,44 @@ function GameComponent(props: {Width: number, Height: number, Size: number, Padd
         for y = 1, props.Height do
 			i += 1
             table.insert(tiles, e(TileComponent, {
+                skin = props.Skin,
+                nearbyBombs = Calculations.GetNearbyBombCount(tileState, Vector2.new(x, y)),
+                tileData = tileState[x][y],
                 mouseDown = mouseDown, 
-                onClick = function() 
+                onClick = function()
+				    local tileStateClone = Calculations.DeepCopy(tileState)
+                    if tileState[x][y].modification == "flag" then
+                        return
+                    end
+                    if tileState[x][y].revealed then
+                        Calculations.Chord(tileStateClone, Vector2.new(x, y), function()
+                            bombCallback(x, y)
+                        end)
+                    end
                     print(`click! {x}, {y}`) 
+                    Calculations.Discover(tileStateClone, Vector2.new(x, y), function()
+                        bombCallback(x, y)
+                    end)
+                    setTileState(tileStateClone)
+                end,
+                onSecondary = function()
+                    local tileStateClone = Calculations.DeepCopy(tileState)
+                    if tileState[x][y].revealed then
+                        return
+                    end
+                    if tileState[x][y].modification == "flag" then
+                        tileStateClone[x][y].modification = "question"
+                    elseif tileState[x][y].modification == "question" then
+                        tileStateClone[x][y].modification = "none"
+                    else
+                        tileStateClone[x][y].modification = "flag"
+                    end
+                    print(`new state: {tileStateClone[x][y].modification}`)
+                    setTileState(tileStateClone)
                 end,
                 index = i
             }))
-        end
+        end 
     end
 
     React.useEffect(function()

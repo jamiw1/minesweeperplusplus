@@ -1,44 +1,59 @@
+local ImageOffset = require(script.Parent.ImageOffset)
 local React = require(game.ReplicatedStorage.Packages.React)
+local Types = require(game.ReplicatedStorage.Shared.Types)
 local e = React.createElement
 
+local function getTileState(
+    nearbyBombs: number,
+    mouseDown: boolean, 
+    tileData: Types.Tile
+): ImageOffset.TileState
+    if tileData.revealed then
+		if tileData.modification == "flag" then
+			return (tileData.isBomb and "Flag" or "NotBomb") :: ImageOffset.TileState
+		end
+        return (tileData.isBomb and "Bomb" or tostring(nearbyBombs)) :: ImageOffset.TileState
+    end
+
+    if tileData.modification == "flag" then
+        return "Flag"
+    end
+
+	if tileData.modification == "question" then
+		return (mouseDown and "QuestionPress" or "Question") :: ImageOffset.TileState
+	end
+    
+    return (mouseDown and "0" or "Blank") :: ImageOffset.TileState
+end
+
 return function(props: {
+    skin: Types.Skin,
+    nearbyBombs: number,
+    tileData: Types.Tile,
     mouseDown: boolean, 
     onClick: () -> (),
+    onSecondary: () -> (),
     index: number,
 })
 	local hovering, setHovering = React.useState(false)
 	local pressing = props.mouseDown and hovering
-    local tileRef = React.useRef(nil)
-
-    React.useEffect(function()
-        local connection1
-        local connection2
-        if tileRef.current then
-            connection1 = tileRef.current.MouseEnter:Connect(function()
-                setHovering(true)
-            end)
-			connection2 = tileRef.current.MouseLeave:Connect(function()
-				setHovering(false)
-			end)
-        end
-
-        return function()
-            if connection1 then
-                connection1:Disconnect()
-            end
-            if connection2 then
-                connection2:Disconnect()
-            end
-        end
-    end, {tileRef.current})
 
     return e("ImageButton", {
-        ImageTransparency = 1,
+        BackgroundTransparency = 1,
         AutoButtonColor = false,
-        BackgroundColor3 = (pressing and hovering) and Color3.new(0,0,0) or Color3.new(1,1,1),
+        BorderSizePixel = 0,
+        Image = props.skin.Tiles,
+        ImageRectSize = Vector2.new(props.skin.TileSize, props.skin.TileSize),
+        ImageRectOffset = ImageOffset.getTileOffset(getTileState(props.nearbyBombs, pressing, props.tileData), props.skin.TileSize),
+
         LayoutOrder = props.index,
-        ref = tileRef,
-        [React.Event.MouseButton1Up] = props.onClick
-    }, {
-    })
+        [React.Event.MouseEnter] = function()
+            setHovering(true)
+        end,
+        [React.Event.MouseLeave] = function()
+		    setHovering(false)
+        end,
+        [React.Event.MouseButton1Up] = props.onClick,
+        [React.Event.MouseButton2Up] = props.onSecondary
+    }, {})
 end

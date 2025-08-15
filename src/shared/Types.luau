@@ -39,4 +39,13 @@ export type Skin = {
     },
 }
 
+export type Tile = {
+	revealed: boolean,
+	isBomb: boolean,
+    modification: "none" | "flag" | "question",
+    detonated: boolean
+}
+
+export type Board = {{Tile}}
+
 return {}
