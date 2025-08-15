@@ -41,7 +41,7 @@ function Calculations.GetNearbyFlagCount(Board: Types.Board, Location: Vector2):
 	return flagCount
 end
 
-function Calculations.Discover(Board: Types.Board, Location: Vector2, bombCallback: () -> ())
+function Calculations.Discover(Board: Types.Board, Location: Vector2, bombCallback: (Vector2) -> ())
     if not Board[Location.X] then
         return
     end
@@ -49,9 +49,9 @@ function Calculations.Discover(Board: Types.Board, Location: Vector2, bombCallba
     if not tile then
         return
     end
-	Board[Location.X][Location.Y].revealed = true
+	tile.revealed = true
     if tile.isBomb then
-        bombCallback()
+        bombCallback(Location)
         return
     end
     local nearbyBombCount = Calculations.GetNearbyBombCount(Board, Location)
@@ -71,7 +71,7 @@ function Calculations.Discover(Board: Types.Board, Location: Vector2, bombCallba
 	end
 end
 
-function Calculations.Chord(Board: Types.Board, Location: Vector2, bombCallback: () -> ())
+function Calculations.Chord(Board: Types.Board, Location: Vector2, bombCallback: (Vector2) -> ())
 	if not Board[Location.X] then
 		return
 	end
@@ -94,7 +94,7 @@ function Calculations.Chord(Board: Types.Board, Location: Vector2, bombCallback:
 				if not Board[newLocation.X][newLocation.Y].revealed then
 					Board[newLocation.X][newLocation.Y].revealed = true
                     if tile.isBomb then
-						bombCallback()
+						bombCallback(newLocation)
 						return
 					end
                     if Calculations.GetNearbyBombCount(Board, newLocation) == 0 then

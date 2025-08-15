@@ -42,8 +42,14 @@ function GameComponent(props: {Width: number, Height: number, Size: number, Padd
     local tileState, setTileState = React.useState(generateBoard(props.Width, props.Height, 10))
     local mouseDown, setMouseDown = React.useState(false)
 
-    function bombCallback(x: number, y: number) 
+    local playing, setPlaying = React.useState(true)
+
+    local function bombCallback(Location: Vector2)
+		local tileStateClone = Calculations.DeepCopy(tileState)
+        tileStateClone[Location.X][Location.Y].detonated = true
 		print("hit bomb")
+		setTileState(tileStateClone)
+        setPlaying(false)
     end
 
     local tiles: {React.ReactNode} = {}
@@ -55,24 +61,26 @@ function GameComponent(props: {Width: number, Height: number, Size: number, Padd
                 skin = props.Skin,
                 nearbyBombs = Calculations.GetNearbyBombCount(tileState, Vector2.new(x, y)),
                 tileData = tileState[x][y],
-                mouseDown = mouseDown, 
+                mouseDown = playing and mouseDown, 
                 onClick = function()
+                    if not playing then
+                        return
+                    end
 				    local tileStateClone = Calculations.DeepCopy(tileState)
                     if tileState[x][y].modification == "flag" then
                         return
                     end
                     if tileState[x][y].revealed then
-                        Calculations.Chord(tileStateClone, Vector2.new(x, y), function()
-                            bombCallback(x, y)
-                        end)
+                        Calculations.Chord(tileStateClone, Vector2.new(x, y), bombCallback)
                     end
                     print(`click! {x}, {y}`) 
-                    Calculations.Discover(tileStateClone, Vector2.new(x, y), function()
-                        bombCallback(x, y)
-                    end)
+                    Calculations.Discover(tileStateClone, Vector2.new(x, y), bombCallback)
                     setTileState(tileStateClone)
                 end,
                 onSecondary = function()
+                    if not playing then
+                        return
+                    end
                     local tileStateClone = Calculations.DeepCopy(tileState)
                     if tileState[x][y].revealed then
                         return

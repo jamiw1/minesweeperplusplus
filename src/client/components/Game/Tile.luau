@@ -8,6 +8,9 @@ local function getTileState(
     mouseDown: boolean, 
     tileData: Types.Tile
 ): ImageOffset.TileState
+    if tileData.detonated then
+        return "HitBomb"
+    end
     if tileData.revealed then
 		if tileData.modification == "flag" then
 			return (tileData.isBomb and "Flag" or "NotBomb") :: ImageOffset.TileState
